@@ -1,0 +1,76 @@
+services:
+  resumeiq-db:
+    image: mysql:8
+    container_name: resumeiq-db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-admin}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-resumeiq-db}
+    ports:
+      - '3306:3306'
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test:
+        ['CMD-SHELL', 'mysqladmin ping -h localhost -u root -p$$MYSQL_ROOT_PASSWORD']
+      interval: 5s
+      timeout: 10s
+      retries: 10
+
+  resumeiq-redis:
+    image: redis:7-alpine
+    container_name: resumeiq-redis
+    restart: always
+    ports:
+      - '6379:6379'
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  resumeiq-backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: resumeiq-backend
+    restart: always
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
+    ports:
+      - '8000:8000'
+    env_file:
+      - .env
+    depends_on:
+      resumeiq-db:
+        condition: service_healthy
+      resumeiq-redis:
+        condition: service_healthy
+
+  resumeiq-worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: resumeiq-worker
+    restart: always
+    command: celery -A app.worker.celery_app worker --loglevel=info --concurrency=2
+    env_file:
+      - .env
+    depends_on:
+      resumeiq-db:
+        condition: service_healthy
+      resumeiq-redis:
+        condition: service_healthy
+
+  resumeiq-frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: resumeiq-frontend
+    restart: always
+    ports:
+      - '3000:80'
+    depends_on:
+      - resumeiq-backend
+
+volumes:
+  mysql_data:
