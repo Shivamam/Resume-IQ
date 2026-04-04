@@ -86,7 +86,6 @@ Resume text:
 
 
 def parse_resume(extracted_text: str) -> ParsedResume:
-    # Truncate to ~12000 chars to stay within Groq token limits
     truncated_text = extracted_text[:12000]
 
     response = client.chat.completions.create(
@@ -97,14 +96,13 @@ def parse_resume(extracted_text: str) -> ParsedResume:
                 resume_text=truncated_text
             )}
         ],
-        temperature=0,        # deterministic output
+        temperature=0,
         max_tokens=4096,
-        response_format={"type": "json_object"}  # forces JSON output
+        response_format={"type": "json_object"}
     )
 
     raw = response.choices[0].message.content
 
-    # Parse and validate with Pydantic
     try:
         data = json.loads(raw)
         return ParsedResume(**data)

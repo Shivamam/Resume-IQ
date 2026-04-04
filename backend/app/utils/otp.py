@@ -9,9 +9,7 @@ OTP_EXPIRE_SECONDS = int(os.getenv("OTP_EXPIRE_SECONDS", 300))
 
 r = redis.from_url(os.getenv("REDIS_URL"))
 
-
 def generate_otp(email: str) -> str:
-    # Generate a cryptographically secure 6-digit OTP
     secret = pyotp.random_base32()
     totp = pyotp.TOTP(secret, interval=OTP_EXPIRE_SECONDS, digits=6)
     otp = totp.now()
@@ -21,7 +19,6 @@ def generate_otp(email: str) -> str:
     r.setex(f"otp:{email}:code", OTP_EXPIRE_SECONDS, otp)
 
     return otp
-
 
 def verify_otp(email: str, otp: str) -> bool:
     stored_code = r.get(f"otp:{email}:code")

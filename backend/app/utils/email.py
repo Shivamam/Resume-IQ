@@ -21,13 +21,18 @@ async def send_otp_email(email: str, otp: str):
         subject="Your login OTP",
         recipients=[email],
         body=f"""
-        <h3>Your verification code</h3>
-        <p>Use the code below to complete your login. It expires in 5 minutes.</p>
-        <h1 style="letter-spacing: 4px;">{otp}</h1>
-        <p>If you didn't request this, ignore this email.</p>
+        Your verification code
+        Use the code below to complete your login. It expires in 5 minutes.
+        {otp}
+        If you didn't request this, ignore this email.
         """,
         subtype=MessageType.html
     )
-    print("Here is your OTP -", otp)
+    print("=== EMAIL DEBUG ===")
+    print("To:", email)
+    print("Subject:", message.subject)
+    print("Body (HTML):")
+    print(message.body)
+    print("===================")
     fm = FastMail(conf)
     await fm.send_message(message)

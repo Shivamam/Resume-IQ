@@ -18,28 +18,23 @@ def process_resume(self, resume_id: int, user_id: int, file_bytes: list, filenam
         if not resume:
             return
 
-        # Step 1 — processing
         resume.status = models.ResumeStatus.processing
         db.commit()
         publish_status(user_id, resume_id, "processing")
 
-        # Step 2 — upload to Cloudinary
         file_bytes_actual = bytes(file_bytes)
         upload_result = upload_pdf(file_bytes_actual, f"{user_id}_{resume_id}_{filename}")
         resume.file_url = upload_result["url"]
         resume.public_id = upload_result["public_id"]
         db.commit()
 
-        # Step 3 — extract text
         text = extract_text(file_bytes_actual)
         resume.extracted_text = text
         db.commit()
 
-        # Step 4 — parse with Groq
         publish_status(user_id, resume_id, "parsing")
         parsed = parse_resume(text)
 
-        # Step 5 — save parsed data to DB
         resume_data = models.ResumeData(
             resume_id=resume_id,
             full_name=parsed.full_name,
@@ -74,7 +69,6 @@ def process_resume(self, resume_id: int, user_id: int, file_bytes: list, filenam
         )
         db.add(resume_data)
 
-        # Step 6 — mark completed
         resume.status = models.ResumeStatus.completed
         db.commit()
 
@@ -104,7 +98,6 @@ score_redis = redis_lib.from_url(os.getenv("REDIS_URL"))
 def score_candidates_task(self, session_id: str, jd_text: str):
     db = SessionLocal()
     try:
-        # Fetch all completed candidates
         candidates = db.query(models.ResumeData).join(
             models.Resume,
             models.Resume.id == models.ResumeData.resume_id

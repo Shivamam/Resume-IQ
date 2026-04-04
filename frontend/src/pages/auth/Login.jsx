@@ -80,7 +80,6 @@ export default function Login() {
   return (
     <div className='min-h-screen flex items-center justify-center bg-gray-50'>
       <div className='card w-full max-w-md p-8'>
-        {/* Step indicator */}
         <div className='flex items-center justify-center gap-2 mb-8'>
           <div
             className={`w-2.5 h-2.5 rounded-full ${step === 1 ? 'bg-[#4f46e5]' : 'bg-gray-300'}`}

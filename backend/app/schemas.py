@@ -1,7 +1,7 @@
 from pydantic import BaseModel, EmailStr
 from datetime import datetime
 from enum import Enum
-
+from typing import List, Optional
 class ResumeStatus(str, Enum):
     queued = "queued"
     processing = "processing"
@@ -48,9 +48,6 @@ class ResumeOut(BaseModel):
     error_message: str | None
     uploaded_at: datetime
 
-from typing import List, Optional
-
-
 class WorkEntry(BaseModel):
     company: str | None = None
     job_title: str | None = None
@@ -58,13 +55,11 @@ class WorkEntry(BaseModel):
     end_date: str | None = None
     description: str | None = None
 
-
 class Project(BaseModel):
     name: str | None = None
     description: str | None = None
     technologies: List[str] = []
     project_type: str | None = None  # "professional" or "personal/academic"
-
 
 class Skills(BaseModel):
     programming_languages: List[str] = []
@@ -73,7 +68,6 @@ class Skills(BaseModel):
     cloud_platforms: List[str] = []
     tools: List[str] = []
     languages_spoken: List[str] = []
-
 
 class ParsedResume(BaseModel):
     # Personal
@@ -116,7 +110,6 @@ class ParsedResume(BaseModel):
     # Other
     notice_period: str | None = None
     expected_salary: str | None = None
-
 
 class ResumeDataOut(BaseModel):
     id: int

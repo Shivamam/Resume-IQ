@@ -1,6 +1,9 @@
-import { Outlet, useLocation } from 'react-router-dom';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
 import Sidebar from '../components/Sidebar';
 import Navbar from '../components/Navbar';
+import useAuthStore from '../store/authStore';
+import axios from 'axios';
 
 const pageTitles = {
   '/dashboard': 'Candidates',
@@ -10,9 +13,36 @@ const pageTitles = {
 
 export default function AppLayout() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { isTokenExpired, refreshToken, setTokens, logout } = useAuthStore();
+
   const title = location.pathname.startsWith('/candidates/')
     ? 'Candidate Detail'
     : pageTitles[location.pathname] || 'Resume IQ';
+
+  useEffect(() => {
+    const checkAndRefresh = async () => {
+      if (!isTokenExpired()) return;
+
+      if (!refreshToken) {
+        logout();
+        navigate('/login');
+        return;
+      }
+
+      try {
+        const res = await axios.post('/api/auth/refresh', {
+          refresh_token: refreshToken,
+        });
+        setTokens(res.data.access_token, refreshToken);
+      } catch {
+        logout();
+        navigate('/login');
+      }
+    };
+
+    checkAndRefresh();
+  }, [location.pathname]);
 
   return (
     <div className='flex min-h-screen bg-gray-50'>

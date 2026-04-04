@@ -76,10 +76,10 @@ class ResumeData(Base):
     expected_salary = Column(String(100), nullable=True)
 
     # JSON fields for nested/array data
-    work_history = Column(Text, nullable=True)       # JSON array
-    skills = Column(Text, nullable=True)             # JSON object
-    projects = Column(Text, nullable=True)           # JSON array
-    education_detail = Column(Text, nullable=True)   # JSON array (all degrees)
+    work_history = Column(Text, nullable=True)       # array
+    skills = Column(Text, nullable=True)             # object
+    projects = Column(Text, nullable=True)           # array
+    education_detail = Column(Text, nullable=True)   # array 
 
     parsed_at = Column(DateTime, default=datetime.utcnow)
     resume = relationship("Resume", backref="parsed_data")

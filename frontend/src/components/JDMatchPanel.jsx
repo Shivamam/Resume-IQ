@@ -69,9 +69,9 @@ export default function JDMatchPanel() {
   const connectWebSocket = (sessionId) => {
     if (wsRef.current) wsRef.current.close();
 
-   const ws = new WebSocket(
-     `ws://localhost:8000/ws/jd/${sessionId}?token=${accessToken}`,
-   );
+    const ws = new WebSocket(
+      `ws://localhost:8000/ws/jd/${sessionId}?token=${accessToken}`,
+    );
 
     ws.onmessage = (e) => {
       const data = JSON.parse(e.data);
@@ -123,7 +123,6 @@ export default function JDMatchPanel() {
         )}
       </div>
 
-      {/* Tabs */}
       <div className='flex rounded-lg border border-gray-200 overflow-hidden'>
         {['text', 'file'].map((t) => (
           <button
@@ -140,7 +139,6 @@ export default function JDMatchPanel() {
         ))}
       </div>
 
-      {/* Input */}
       {tab === 'text' ? (
         <textarea
           className='input text-xs resize-none'
@@ -170,7 +168,6 @@ export default function JDMatchPanel() {
         </p>
       )}
 
-      {/* Progress */}
       {scoring && scoringProgress && (
         <div className='space-y-2'>
           <div className='flex justify-between text-xs text-gray-500'>
@@ -188,7 +185,6 @@ export default function JDMatchPanel() {
         </div>
       )}
 
-      {/* Session active */}
       {sessionId && !scoring && scoringProgress && (
         <div className='bg-green-50 border border-green-200 rounded-lg p-3 space-y-3'>
           <div className='flex items-center gap-2'>
@@ -197,7 +193,6 @@ export default function JDMatchPanel() {
               Scored {scoringProgress.scored} candidates
             </p>
           </div>
-          {/* Threshold slider */}
           <div>
             <div className='flex justify-between text-xs text-gray-600 mb-1'>
               <span>Min score threshold</span>
@@ -219,7 +214,6 @@ export default function JDMatchPanel() {
         </div>
       )}
 
-      {/* Match button */}
       {!sessionId && (
         <button
           onClick={handleMatch}

@@ -161,6 +161,7 @@ export default function CandidatesTable() {
     sortOrder,
     sessionId,
     minScore,
+    setPageSize,
     setPage,
     setSort,
     setCandidates,
@@ -209,7 +210,7 @@ export default function CandidatesTable() {
 
   useEffect(() => {
     fetchCandidates();
-  }, [page, filters, sortBy, sortOrder, sessionId, minScore]);
+  }, [page, pageSize, filters, sortBy, sortOrder, sessionId, minScore]);
 
 // Show match score column only when JD session is active
 const activeCols = ALL_COLUMNS.filter((col) => {
@@ -554,29 +555,57 @@ const sortableFields = [
       )}
 
       {/* Pagination */}
-      {totalPages > 1 && (
-        <div className='px-4 py-3 border-t border-gray-100 flex items-center justify-between'>
-          <span className='text-xs text-gray-500'>
-            Page {page} of {totalPages} · {total} total
-          </span>
-          <div className='flex gap-2'>
-            <button
-              onClick={() => setPage(page - 1)}
-              disabled={page === 1}
-              className='btn-secondary text-xs py-1 px-3 disabled:opacity-40'
-            >
-              Previous
-            </button>
-            <button
-              onClick={() => setPage(page + 1)}
-              disabled={page === totalPages}
-              className='btn-secondary text-xs py-1 px-3 disabled:opacity-40'
-            >
-              Next
-            </button>
-          </div>
+      <div className='px-4 py-3 border-t border-gray-100 flex items-center justify-between flex-wrap gap-3'>
+        <div className='flex items-center gap-2'>
+          <span className='text-xs text-gray-500'>Rows per page</span>
+          <select
+            value={pageSize}
+            onChange={(e) => setPageSize(Number(e.target.value))}
+            className='text-xs border border-gray-200 rounded-lg px-2 py-1 bg-white text-gray-700 focus:outline-none focus:ring-1 focus:ring-[#4f46e5]'
+          >
+            {[5, 10, 20, 50].map((n) => (
+              <option key={n} value={n}>
+                {n}
+              </option>
+            ))}
+          </select>
         </div>
-      )}
+
+        <span className='text-xs text-gray-500'>
+          Page {page} of {totalPages} · {total} total
+        </span>
+
+        <div className='flex gap-2'>
+          <button
+            onClick={() => setPage(1)}
+            disabled={page === 1}
+            className='btn-secondary text-xs py-1 px-2 disabled:opacity-40'
+          >
+            «
+          </button>
+          <button
+            onClick={() => setPage(page - 1)}
+            disabled={page === 1}
+            className='btn-secondary text-xs py-1 px-3 disabled:opacity-40'
+          >
+            Previous
+          </button>
+          <button
+            onClick={() => setPage(page + 1)}
+            disabled={page === totalPages}
+            className='btn-secondary text-xs py-1 px-3 disabled:opacity-40'
+          >
+            Next
+          </button>
+          <button
+            onClick={() => setPage(totalPages)}
+            disabled={page === totalPages}
+            className='btn-secondary text-xs py-1 px-2 disabled:opacity-40'
+          >
+            »
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from pydantic import BaseModel  # ✅ FIXED
+from pydantic import BaseModel 
 
 from .. import models, schemas
 from ..database import get_db
@@ -10,14 +10,12 @@ from ..utils.auth import (
     create_access_token,
     create_refresh_token,
     get_current_user,
-    decode_token  # ✅ FIXED
+    decode_token 
 )
 from ..utils.otp import generate_otp, verify_otp
 from ..utils.email import send_otp_email
 
-
 router = APIRouter(prefix="/auth", tags=["auth"])
-
 
 @router.post("/register", response_model=schemas.UserOut, status_code=status.HTTP_201_CREATED)
 async def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
@@ -37,7 +35,6 @@ async def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(db_user)
     return db_user
-
 
 @router.post("/login", status_code=status.HTTP_200_OK)
 async def login(payload: schemas.LoginRequest, db: Session = Depends(get_db)):
@@ -61,7 +58,6 @@ async def login(payload: schemas.LoginRequest, db: Session = Depends(get_db)):
     await send_otp_email(user.email, otp)
 
     return {"message": "OTP sent to your email"}
-
 
 @router.post("/verify-otp", response_model=schemas.TokenResponse)
 async def verify_otp_route(
@@ -92,7 +88,6 @@ async def verify_otp_route(
         refresh_token=create_refresh_token(token_data)
     )
 
-
 @router.post("/change-password", status_code=status.HTTP_200_OK)
 def change_password(
     payload: schemas.ChangePasswordRequest,
@@ -116,10 +111,8 @@ def change_password(
 
     return {"message": "Password changed successfully"}
 
-
 class RefreshRequest(BaseModel):
     refresh_token: str
-
 
 @router.post("/refresh", status_code=status.HTTP_200_OK)
 def refresh_token(payload: RefreshRequest):

@@ -93,7 +93,6 @@ export default function useResumeUpload() {
       const item = files[i];
       if (item.status !== 'pending') continue;
 
-      // Mark this file as uploading
       setFiles((prev) =>
         prev.map((f, idx) => (idx === i ? { ...f, status: 'queued' } : f)),
       );
@@ -127,7 +126,6 @@ export default function useResumeUpload() {
       }
     }
 
-    // Connect WebSocket for all successfully queued files
     if (allResumeIds.length > 0) {
       connectWebSocket(allResumeIds);
     }

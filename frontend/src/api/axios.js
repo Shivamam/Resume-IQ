@@ -43,7 +43,6 @@ api.interceptors.response.use(
     const shouldSkip = SKIP_LOGOUT_URLS.some((u) => url.includes(u));
 
     if (is401 && !shouldSkip && !originalRequest._retry) {
-      // Try to refresh the token
       const refreshToken = useAuthStore.getState().refreshToken;
 
       if (!refreshToken) {
@@ -53,7 +52,6 @@ api.interceptors.response.use(
       }
 
       if (isRefreshing) {
-        // Queue requests that come in while refreshing
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
         })
@@ -75,7 +73,7 @@ api.interceptors.response.use(
         const newAccessToken = res.data.access_token;
         useAuthStore.getState().setTokens(
           newAccessToken,
-          refreshToken, // keep same refresh token
+          refreshToken,
         );
 
         api.defaults.headers.common['Authorization'] =

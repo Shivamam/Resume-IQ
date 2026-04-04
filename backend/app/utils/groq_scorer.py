@@ -61,12 +61,12 @@ def score_candidate(jd_text: str, candidate: dict) -> dict:
     work_history_data = json.loads(candidate.get("work_history") or "[]")
     work_summary = ", ".join([
         f"{w.get('job_title')} at {w.get('company')}"
-        for w in work_history_data[:3]  # last 3 jobs only to save tokens
+        for w in work_history_data[:3] 
         if w.get("job_title")
     ])
 
     prompt = SCORING_USER_PROMPT.format(
-        jd_text=jd_text[:3000],  # truncate JD to save tokens
+        jd_text=jd_text[:3000], 
         skills=", ".join(all_skills) if all_skills else "Not specified",
         experience=candidate.get("total_experience_years") or "Not specified",
         current_title=candidate.get("current_job_title") or "Not specified",

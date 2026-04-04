@@ -3,7 +3,7 @@ import { persist } from 'zustand/middleware';
 
 const useAuthStore = create(
   persist(
-    (set) => ({
+    (set, get) => ({
       accessToken: null,
       refreshToken: null,
       user: null,
@@ -22,6 +22,18 @@ const useAuthStore = create(
       isAuthenticated: () => {
         const state = useAuthStore.getState();
         return !!state.accessToken;
+      },
+
+      isTokenExpired: () => {
+        const token = get().accessToken;
+        if (!token) return true;
+        try {
+          const payload = JSON.parse(atob(token.split('.')[1]));
+          // exp is in seconds, Date.now() is in milliseconds
+          return payload.exp * 1000 < Date.now();
+        } catch {
+          return true;
+        }
       },
     }),
     {

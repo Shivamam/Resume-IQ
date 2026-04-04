@@ -1,10 +1,10 @@
 import { create } from 'zustand';
 
-const useCandidatesStore = create((set, get) => ({
+const useCandidatesStore = create((set) => ({
   candidates: [],
   total: 0,
   page: 1,
-  pageSize: 20,
+  pageSize: 5,
   totalPages: 1,
   loading: false,
   error: null,
@@ -34,6 +34,7 @@ const useCandidatesStore = create((set, get) => ({
   scoring: false,
   scoringProgress: null,
 
+  setPageSize: (pageSize) => set({ pageSize, page: 1 }),
   setFilters: (filters) => set({ filters, page: 1 }),
   resetFilters: () =>
     set({

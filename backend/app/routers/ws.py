@@ -6,7 +6,7 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Query
 from ..utils.auth import decode_token
 from ..utils.redis_ws import ws_redis
 
-router = APIRouter()  # ← no prefix here, prefix goes on the route itself
+router = APIRouter() 
 jd_redis = redis_lib.from_url(os.getenv("REDIS_URL"))
 
 async def get_user_id_from_token(token: str) -> int:
@@ -16,7 +16,7 @@ async def get_user_id_from_token(token: str) -> int:
     return int(payload["sub"])
 
 
-@router.websocket("/ws/resumes")  # ← full path defined here
+@router.websocket("/ws/resumes")
 async def resume_status_ws(
     websocket: WebSocket,
     token: str = Query(...)
@@ -60,7 +60,6 @@ async def jd_scoring_ws(
 
     await websocket.accept()
 
-    # Check if scoring already completed before subscribing
     status_val = jd_redis.get(f"jd_session:{session_id}:status")
 
     if not status_val:
@@ -69,7 +68,6 @@ async def jd_scoring_ws(
         return
 
     if status_val.decode() == "completed":
-        # Already done — send completed immediately, no need to subscribe
         scores_raw = jd_redis.hgetall(f"jd_session:{session_id}:scores")
         scores = {
             int(k): json.loads(v)
@@ -87,7 +85,6 @@ async def jd_scoring_ws(
         await websocket.close()
         return
 
-    # Still in progress — subscribe and wait for messages
     pubsub = jd_redis.pubsub()
     pubsub.subscribe(f"jd_session:{session_id}:progress")
 

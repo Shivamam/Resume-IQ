@@ -24,14 +24,12 @@ async def match_jd(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    # Must provide either text or file
     if not text and not file:
         raise HTTPException(
             status_code=400,
             detail="Provide either a JD text or a file (PDF or DOCX)"
         )
 
-    # Extract JD text
     if file:
         file_bytes = await file.read()
         try:
@@ -44,14 +42,11 @@ async def match_jd(
     if not jd_text:
         raise HTTPException(status_code=400, detail="JD text is empty")
 
-    # Generate unique session ID
     session_id = uuid.uuid4().hex
 
-    # Store JD text in Redis with 2hr TTL
     r.set(f"jd_session:{session_id}:text", jd_text, ex=7200)
     r.set(f"jd_session:{session_id}:status", "scoring", ex=7200)
 
-    # Dispatch Celery task
     score_candidates_task.delay(session_id=session_id, jd_text=jd_text)
 
     return {

@@ -62,7 +62,6 @@ export default function Upload() {
 
   return (
     <div className='max-w-3xl mx-auto space-y-6'>
-      {/* Drop zone */}
       <div
         {...getRootProps()}
         className={`border-2 border-dashed rounded-xl p-12 text-center cursor-pointer transition-colors ${
@@ -97,7 +96,6 @@ export default function Upload() {
         </div>
       </div>
 
-      {/* File list */}
       {hasFiles && (
         <div className='card overflow-hidden'>
           <div className='px-4 py-3 border-b border-gray-100 flex items-center justify-between'>
@@ -161,7 +159,6 @@ export default function Upload() {
         </div>
       )}
 
-      {/* Actions */}
       {hasFiles && (
         <div className='flex items-center justify-between'>
           <p className='text-sm text-gray-500'>

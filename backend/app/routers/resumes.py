@@ -29,27 +29,22 @@ async def upload_resumes(
     created_resumes = []
 
     for file in files:
-        # Validate file type
         if file.content_type != "application/pdf":
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"{file.filename} is not a PDF"
             )
 
-        # Read file
         file_bytes = await file.read()
 
-        # Validate file size
         if len(file_bytes) > MAX_FILE_SIZE:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"{file.filename} exceeds 5MB limit"
             )
 
-        # Compute SHA-256 hash of file contents
         file_hash = hashlib.sha256(file_bytes).hexdigest()
 
-        # Check for duplicate — same hash already exists in DB
         existing = db.query(models.Resume).filter(
             models.Resume.file_hash == file_hash
         ).first()
@@ -65,7 +60,6 @@ async def upload_resumes(
                 }
             )
 
-        # Save resume record with hash
         resume = models.Resume(
             user_id=current_user.id,
             original_filename=file.filename,
@@ -76,7 +70,6 @@ async def upload_resumes(
         db.commit()
         db.refresh(resume)
 
-        # Dispatch Celery task
         process_resume.delay(
             resume_id=resume.id,
             user_id=current_user.id,
