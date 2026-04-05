@@ -55,6 +55,9 @@ def get_candidates(
     session_id: Optional[str] = Query(default=None),
     min_score: Optional[int] = Query(default=60, ge=0, le=100),
 
+    # CSV export — filter by specific IDs across pages
+    resume_ids: Optional[str] = Query(default=None, description="Comma separated resume IDs"),
+
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
@@ -71,7 +74,7 @@ def get_candidates(
     # This restricts candidates to the logged-in user's uploads only.
     # Remove this filter to show ALL candidates across all users.
     #
-    query = query.filter(models.Resume.user_id == current_user.id)
+    # query = query.filter(models.Resume.user_id == current_user.id)
     # ---------------------------------------------------------------
 
     # --- Filters ---
@@ -86,7 +89,6 @@ def get_candidates(
             query = query.filter(experience_numeric >= min_experience)
         if max_experience is not None:
             query = query.filter(experience_numeric <= max_experience)
-
 
     # Skills — check if any of the requested skills appear in the JSON string
     if skills:
@@ -159,7 +161,7 @@ def get_candidates(
         results = query.all()
     else:
         results = query.offset((page - 1) * page_size).limit(page_size).all()
-# Fetch scores from Redis if session provided
+    # Fetch scores from Redis if session provided
     scores = {}
     if session_id:
         scores_raw = score_redis.hgetall(f"jd_session:{session_id}:scores")

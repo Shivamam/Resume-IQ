@@ -8,7 +8,7 @@ const useCandidatesStore = create((set) => ({
   totalPages: 1,
   loading: false,
   error: null,
-
+  selected: new Set(),
   // Filters
   filters: {
     min_experience: '',
@@ -68,6 +68,29 @@ const useCandidatesStore = create((set) => ({
     }),
   setLoading: (loading) => set({ loading }),
   setError: (error) => set({ error }),
+
+  toggleSelect: (id) =>
+    set((state) => {
+      const next = new Set(state.selected);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return { selected: next };
+    }),
+  toggleSelectAll: (candidates) =>
+    set((state) => {
+      const allSelected = candidates.every((c) =>
+        state.selected.has(c.resume_id),
+      );
+      if (allSelected) {
+        const next = new Set(state.selected);
+        candidates.forEach((c) => next.delete(c.resume_id));
+        return { selected: next };
+      } else {
+        const next = new Set(state.selected);
+        candidates.forEach((c) => next.add(c.resume_id));
+        return { selected: next };
+      }
+    }),
+  clearSelected: () => set({ selected: new Set() }),
 }));
 
 export default useCandidatesStore;

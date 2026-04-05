@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getCandidates } from '../api/candidates';
+import { getCandidates, getCandidatesByIds } from '../api/candidates';
 import useCandidatesStore from '../store/candidatesStore';
 
 const ALL_COLUMNS = [
@@ -18,37 +18,30 @@ const ALL_COLUMNS = [
   { key: 'status', label: 'Status' },
 ];
 
-function safeParseSkills(skillsJson) {
-  try {
-    return JSON.parse(skillsJson);
-  } catch {
-    return null;
-  }
-}
-
 function SkillTags({ skillsJson }) {
-  const skills = safeParseSkills(skillsJson);
-
-  const all = skills
-    ? [
-        ...(skills.programming_languages || []),
-        ...(skills.frameworks_and_libraries || []),
-      ].slice(0, 3)
-    : [];
-
-  if (!all.length) {
+  if (!skillsJson) return <span className='text-gray-400 text-xs'>—</span>;
+  try {
+    const skills = JSON.parse(skillsJson);
+    const all = [
+      ...(skills.programming_languages || []),
+      ...(skills.frameworks_and_libraries || []),
+    ].slice(0, 3);
+    if (!all.length) return <span className='text-gray-400 text-xs'>—</span>;
+    return (
+      <div className='flex flex-wrap gap-1'>
+        {all.map((s, i) => (
+          <span
+            key={i}
+            className='px-1.5 py-0.5 bg-[#eef2ff] text-[#4f46e5] text-xs rounded font-medium'
+          >
+            {s}
+          </span>
+        ))}
+      </div>
+    );
+  } catch {
     return <span className='text-gray-400 text-xs'>—</span>;
   }
-
-  return (
-    <div className='flex flex-wrap gap-1'>
-      {all.map((s, i) => (
-        <span key={i} className='px-1.5 py-0.5 bg-[#eef2ff] text-[#4f46e5] text-xs rounded font-medium'>
-          {s}
-        </span>
-      ))}
-    </div>
-  );
 }
 
 function ScoreBadge({ score }) {
@@ -88,11 +81,7 @@ function StatusBadge({ status }) {
 function renderCell(col, c) {
   switch (col.key) {
     case 'name':
-      return (
-        <div>
-          <p className='font-medium text-gray-900'>{c.full_name || '—'}</p>
-        </div>
-      );
+      return <p className='font-medium text-gray-900'>{c.full_name || '—'}</p>;
     case 'email':
       return <span className='text-gray-600 text-xs'>{c.email || '—'}</span>;
     case 'location':
@@ -161,22 +150,22 @@ export default function CandidatesTable() {
     sortOrder,
     sessionId,
     minScore,
-    setPageSize,
+    selected,
     setPage,
     setSort,
+    setPageSize,
     setCandidates,
     setLoading,
     setError,
+    toggleSelect,
+    toggleSelectAll,
+    clearSelected,
   } = useCandidatesStore();
 
-  // Visible columns
   const [visibleCols, setVisibleCols] = useState(
     ALL_COLUMNS.filter((c) => !c.jdOnly).map((c) => c.key),
   );
   const [showColPicker, setShowColPicker] = useState(false);
-
-  // Selected rows for export
-  const [selected, setSelected] = useState(new Set());
 
   const toggleCol = (key) => {
     setVisibleCols((prev) =>
@@ -200,7 +189,6 @@ export default function CandidatesTable() {
       });
       const res = await getCandidates(params);
       setCandidates(res.data);
-      setSelected(new Set());
     } catch (err) {
       setError(err.response?.data?.detail || 'Failed to fetch candidates');
     } finally {
@@ -212,120 +200,128 @@ export default function CandidatesTable() {
     fetchCandidates();
   }, [page, pageSize, filters, sortBy, sortOrder, sessionId, minScore]);
 
-// Show match score column only when JD session is active
-const activeCols = ALL_COLUMNS.filter((col) => {
-  if (col.jdOnly) return !!sessionId  // ← show if session active, hide if not
-  if (col.always) return true
-  return visibleCols.includes(col.key)
-})
+  const activeCols = ALL_COLUMNS.filter((col) => {
+    if (col.jdOnly) return !!sessionId;
+    if (col.always) return true;
+    return visibleCols.includes(col.key);
+  });
 
-const handleSort = (field) => {
-  if (!sortableFields.includes(field)) return;
-  setSort(field, sortBy === field && sortOrder === 'asc' ? 'desc' : 'asc');
-};
+  const sortableFields = [
+    'name',
+    'email',
+    'location',
+    'experience',
+    'last_role',
+    'last_company',
+    'education',
+    'college',
+    'match_score',
+    'uploaded_at',
+    'status',
+  ];
 
+  const handleSort = (field) => {
+    if (!sortableFields.includes(field)) return;
+    setSort(field, sortBy === field && sortOrder === 'asc' ? 'desc' : 'asc');
+  };
 
-const sortableFields = [
-  'name',
-  'email',
-  'location',
-  'experience',
-  'last_role',
-  'last_company',
-  'education',
-  'college',
-  'match_score',
-  'uploaded_at',
-  'status',
-];
-  const toggleSelectAll = () => {
-    if (selected.size === candidates.length) {
-      setSelected(new Set());
-    } else {
-      setSelected(new Set(candidates.map((c) => c.resume_id)));
+  const allOnPageSelected =
+    candidates.length > 0 && candidates.every((c) => selected.has(c.resume_id));
+
+const exportCSV = async () => {
+  if (!selected.size) return;
+
+  let rows = [];
+
+  // Check if all selected are on current page
+  const currentPageSelected = candidates.filter((c) =>
+    selected.has(c.resume_id),
+  );
+
+  if (currentPageSelected.length === selected.size) {
+    // All selected are on current page — no extra fetch needed
+    rows = currentPageSelected;
+  } else {
+    // Selected spans multiple pages — fetch all by ID
+    try {
+      const ids = Array.from(selected);
+      const res = await getCandidatesByIds(ids);
+      rows = res.data.results;
+    } catch {
+      alert('Failed to fetch selected candidates for export');
+      return;
+    }
+  }
+
+  if (!rows.length) return;
+
+  const headers = activeCols.map((col) => col.label);
+
+  const getCellValue = (col, c) => {
+    switch (col.key) {
+      case 'name':
+        return c.full_name || '';
+      case 'email':
+        return c.email || '';
+      case 'location':
+        return [c.city, c.state].filter(Boolean).join(', ');
+      case 'experience':
+        return c.total_experience_years || '';
+      case 'last_role':
+        return c.current_job_title || '';
+      case 'last_company':
+        return c.current_company || '';
+      case 'skills': {
+        try {
+          const s = JSON.parse(c.skills || '{}');
+          return [
+            ...(s.programming_languages || []),
+            ...(s.frameworks_and_libraries || []),
+          ]
+            .slice(0, 5)
+            .join(', ');
+        } catch {
+          return '';
+        }
+      }
+      case 'education':
+        return c.highest_degree || '';
+      case 'college':
+        return c.university || '';
+      case 'match_score':
+        return c.match_score ?? '';
+      case 'uploaded_at':
+        return new Date(c.uploaded_at).toLocaleDateString();
+      case 'status':
+        return c.status || '';
+      default:
+        return '';
     }
   };
 
-  const toggleSelect = (id) => {
-    setSelected((prev) => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
-  };
+  const csvRows = [
+    headers.join(','),
+    ...rows.map((c) =>
+      activeCols
+        .map((col) => {
+          const val = getCellValue(col, c);
+          return typeof val === 'string' &&
+            (val.includes(',') || val.includes('\n'))
+            ? `"${val.replace(/"/g, '""')}"`
+            : val;
+        })
+        .join(','),
+    ),
+  ];
 
-  const exportCSV = () => {
-    const rows = candidates.filter((c) => selected.has(c.resume_id));
-    if (!rows.length) return;
-
-    const headers = activeCols.map((col) => col.label);
-
-    const getCellValue = (col, c) => {
-      switch (col.key) {
-        case 'name':
-          return c.full_name || '';
-        case 'email':
-          return c.email || '';
-        case 'location':
-          return [c.city, c.state].filter(Boolean).join(', ');
-        case 'experience':
-          return c.total_experience_years || '';
-        case 'last_role':
-          return c.current_job_title || '';
-        case 'last_company':
-          return c.current_company || '';
-        case 'skills': {
-          try {
-            const s = JSON.parse(c.skills || '{}');
-            return [
-              ...(s.programming_languages || []),
-              ...(s.frameworks_and_libraries || []),
-            ]
-              .slice(0, 5)
-              .join(', ');
-          } catch {
-            return '';
-          }
-        }
-        case 'education':
-          return c.highest_degree || '';
-        case 'college':
-          return c.university || '';
-        case 'match_score':
-          return c.match_score ?? '';
-        case 'uploaded_at':
-          return new Date(c.uploaded_at).toLocaleDateString();
-        case 'status':
-          return c.status || '';
-        default:
-          return '';
-      }
-    };
-
-    const csvRows = [
-      headers.join(','),
-      ...rows.map((c) =>
-        activeCols
-          .map((col) => {
-            const val = getCellValue(col, c);
-            // Wrap in quotes if contains comma or newline
-            return typeof val === 'string' &&
-              (val.includes(',') || val.includes('\n'))
-              ? `"${val.replace(/"/g, '""')}"`
-              : val;
-          })
-          .join(','),
-      ),
-    ];
-
-    const blob = new Blob([csvRows.join('\n')], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `candidates_${new Date().toISOString().split('T')[0]}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
+  const blob = new Blob([csvRows.join('\n')], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `candidates_${new Date().toISOString().split('T')[0]}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+};
 
   if (loading) {
     return (
@@ -363,7 +359,7 @@ const sortableFields = [
   return (
     <div className='card overflow-hidden'>
       {/* Toolbar */}
-      <div className='px-4 py-3 border-b border-gray-100 flex items-center justify-between gap-4'>
+      <div className='px-4 py-3 border-b border-gray-100 flex items-center justify-between gap-4 flex-wrap'>
         <div className='flex items-center gap-3'>
           <span className='text-sm font-medium text-gray-700'>
             {total} candidate{total !== 1 ? 's' : ''}
@@ -372,9 +368,21 @@ const sortableFields = [
             )}
           </span>
           {selected.size > 0 && (
-            <span className='text-xs text-gray-500'>
-              {selected.size} selected
-            </span>
+            <div className='flex items-center gap-2'>
+              <span className='text-xs text-gray-500'>
+                {selected.size} selected
+                {selected.size >
+                candidates.filter((c) => selected.has(c.resume_id)).length
+                  ? ' across pages'
+                  : ''}
+              </span>
+              <button
+                onClick={clearSelected}
+                className='text-xs text-gray-400 hover:text-gray-600'
+              >
+                Clear
+              </button>
+            </div>
           )}
         </div>
 
@@ -479,15 +487,11 @@ const sortableFields = [
           <table className='w-full text-sm'>
             <thead className='bg-gray-50 border-b border-gray-100'>
               <tr>
-                {/* Checkbox column */}
                 <th className='pl-4 pr-2 py-3 w-8'>
                   <input
                     type='checkbox'
-                    checked={
-                      selected.size === candidates.length &&
-                      candidates.length > 0
-                    }
-                    onChange={toggleSelectAll}
+                    checked={allOnPageSelected}
+                    onChange={() => toggleSelectAll(candidates)}
                     className='accent-[#4f46e5]'
                   />
                 </th>
