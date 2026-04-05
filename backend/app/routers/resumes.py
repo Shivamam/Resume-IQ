@@ -100,7 +100,7 @@ def get_resume(
 ):
     resume = db.query(models.Resume).filter(
         models.Resume.id == resume_id,
-        models.Resume.user_id == current_user.id
+        # models.Resume.user_id == current_user.id   ##Removed user filtering for temp
     ).first()
     if not resume:
         raise HTTPException(status_code=404, detail="Resume not found")
@@ -136,7 +136,7 @@ def get_parsed_resume(
 ):
     resume = db.query(models.Resume).filter(
         models.Resume.id == resume_id,
-        models.Resume.user_id == current_user.id
+        # models.Resume.user_id == current_user.id     ##Removed user filtering for temp
     ).first()
 
     if not resume:
