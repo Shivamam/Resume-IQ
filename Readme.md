@@ -6,7 +6,7 @@ An internal HR portal for HR teams to upload resumes, extract structured candida
 
 ## Demo
 
-▶️ [Watch Demo Video]([https://drive.google.com/your-video-link-here](https://drive.google.com/file/d/1hJaWQqzJXfgeHn49q9AkVzQPjaXDd-ur/view?usp=sharing))
+▶️ [Watch Demo Video](https://drive.google.com/file/d/1hJaWQqzJXfgeHn49q9AkVzQPjaXDd-ur/view?usp=sharing)
 
 ---
 
