@@ -29,23 +29,6 @@ app.add_middleware(
 
 # app = FastAPI(redirect_slashes=False)
 
-@app.on_event("startup")
-async def startup():
-    # Retry DB connection — MySQL container may not be ready immediately
-    retries = 10
-    for i in range(retries):
-        try:
-            Base.metadata.create_all(bind=engine)
-            print("Database tables created successfully")
-            break
-        except sqlalchemy.exc.OperationalError:
-            if i < retries - 1:
-                print(f"DB not ready, retrying in 3s... ({i+1}/{retries})")
-                time.sleep(3)
-            else:
-                raise
-
-
 @app.get("/")
 def root():
     return {"message": "FastAPI + MySQL + Redis is running"}
