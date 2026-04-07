@@ -44,7 +44,6 @@ HR can paste a job description as plain text or upload it as a PDF or DOCX file.
 | File Storage | Cloudinary |
 | LLM | Groq API (llama-3.3-70b-versatile) |
 | Email | SendGrid SMTP |
-| OCR | Tesseract + pdf2image |
 | Containerisation | Docker + Docker Compose |
 
 ---
