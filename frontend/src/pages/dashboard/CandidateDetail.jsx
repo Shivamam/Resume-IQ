@@ -1,37 +1,37 @@
-import { useEffect, useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
-import { getCandidateDetail, getResume } from '../../api/resumes'
-import SkillsSection from '../../components/SkillsSection'
-import WorkHistory from '../../components/WorkHistory'
-import EducationSection from '../../components/EducationSection'
+import { useEffect, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { getCandidateDetail, getResume } from '../../api/resumes';
+import SkillsSection from '../../components/SkillsSection';
+import WorkHistory from '../../components/WorkHistory';
+import EducationSection from '../../components/EducationSection';
 
 function Section({ title, children }) {
   return (
-    <div className="card p-6">
-      <h3 className="text-sm font-semibold text-gray-700 mb-4 pb-3 border-b border-gray-100">
+    <div className='card p-6'>
+      <h3 className='text-sm font-semibold text-gray-700 mb-4 pb-3 border-b border-gray-100'>
         {title}
       </h3>
       {children}
     </div>
-  )
+  );
 }
 
 function InfoRow({ label, value }) {
   return (
     <div>
-      <p className="text-xs text-gray-400">{label}</p>
-      <p className="text-sm font-medium text-gray-900 mt-0.5">{value || '—'}</p>
+      <p className='text-xs text-gray-400'>{label}</p>
+      <p className='text-sm font-medium text-gray-900 mt-0.5'>{value || '—'}</p>
     </div>
-  )
+  );
 }
 
 export default function CandidateDetail() {
-  const { id } = useParams()
-  const navigate = useNavigate()
-  const [parsed, setParsed] = useState(null)
-  const [resume, setResume] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const [parsed, setParsed] = useState(null);
+  const [resume, setResume] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetch = async () => {
@@ -39,47 +39,75 @@ export default function CandidateDetail() {
         const [parsedRes, resumeRes] = await Promise.all([
           getCandidateDetail(id),
           getResume(id),
-        ])
-        setParsed(parsedRes.data)
-        setResume(resumeRes.data)
+        ]);
+        setParsed(parsedRes.data);
+        setResume(resumeRes.data);
       } catch (err) {
-        setError(err.response?.data?.detail || 'Failed to load candidate')
+        setError(err.response?.data?.detail || 'Failed to load candidate');
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
-    fetch()
-  }, [id])
+    };
+    fetch();
+  }, [id]);
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <svg className="w-8 h-8 animate-spin text-[#4f46e5]" fill="none" viewBox="0 0 24 24">
-          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+      <div className='flex items-center justify-center h-64'>
+        <svg
+          className='w-8 h-8 animate-spin text-[#4f46e5]'
+          fill='none'
+          viewBox='0 0 24 24'
+        >
+          <circle
+            className='opacity-25'
+            cx='12'
+            cy='12'
+            r='10'
+            stroke='currentColor'
+            strokeWidth='4'
+          />
+          <path
+            className='opacity-75'
+            fill='currentColor'
+            d='M4 12a8 8 0 018-8v8H4z'
+          />
         </svg>
       </div>
-    )
+    );
   }
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 gap-3">
-        <p className="text-red-500 text-sm">{error}</p>
-        <button onClick={() => navigate('/dashboard')} className="btn-secondary text-sm">
+      <div className='flex flex-col items-center justify-center h-64 gap-3'>
+        <p className='text-red-500 text-sm'>{error}</p>
+        <button
+          onClick={() => navigate('/dashboard')}
+          className='btn-secondary text-sm'
+        >
           Back to dashboard
         </button>
       </div>
-    )
+    );
   }
 
   const projects = (() => {
-    try { return JSON.parse(parsed.projects || '[]') } catch { return [] }
-  })()
+    try {
+      return JSON.parse(parsed.projects || '[]');
+    } catch {
+      return [];
+    }
+  })();
+
+  // Ensures URL has a protocol prefix — prevents browser treating it as relative path
+  function sanitizeUrl(url) {
+    if (!url) return null;
+    if (url.startsWith('http://') || url.startsWith('https://')) return url;
+    return `https://${url}`;
+  }
 
   return (
     <div className='max-w-4xl mx-auto space-y-6'>
-      {/* Header */}
       <div className='flex items-start justify-between'>
         <div className='flex items-center gap-4'>
           <button
@@ -154,7 +182,7 @@ export default function CandidateDetail() {
             <div>
               <p className='text-xs text-gray-400'>LinkedIn</p>
               <a
-                href={parsed.linkedin_url}
+                href={sanitizeUrl(parsed.linkedin_url)}
                 target='_blank'
                 rel='noopener noreferrer'
                 className='text-sm text-[#4f46e5] hover:underline mt-0.5 block truncate'
@@ -167,7 +195,7 @@ export default function CandidateDetail() {
             <div>
               <p className='text-xs text-gray-400'>GitHub</p>
               <a
-                href={parsed.github_url}
+                href={sanitizeUrl(parsed.github_url)}
                 target='_blank'
                 rel='noopener noreferrer'
                 className='text-sm text-[#4f46e5] hover:underline mt-0.5 block truncate'
